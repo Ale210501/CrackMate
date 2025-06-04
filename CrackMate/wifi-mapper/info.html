@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CrackMate - Info</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="logo-area"> 
+        <img src="logo/logo-transparent-png.png" alt="CrackMate Logo" class="logoimg">
+        <h1 class="logo">CrackMate</h1>
+      </div>
+      <nav>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="mappa.html">Map</a></li>
+          <li><a href="statistiche.html">Statistics</a></li>
+          <li><a href="info.html" class="active">Info</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <div class="info-page-content"> 
+      <section>
+        <h2>Project Information</h2>
+        <p>
+          This website was created as part of a university project focused on network security. Its purpose is to scan
+          WiFi networks in an urban environment, capture handshakes where possible, and visualize the collected data on an
+          interactive map.
+        </p>
+        <p>
+          WiFi networks are displayed using color codes:
+        </p>
+        <ul>
+          <li><span class="color-green">Green</span>: <strong>Geolocated network</strong> (secure network)</li>
+          <li><span class="color-orange">Orange</span>: <strong>Handshake Captured</strong> (handshake captured, password can be cracked)</li>
+          <li><span class="color-red">Red</span>: <strong>Cracked</strong> (handshake captured and password obtained)</li>
+        </ul>
+        <p>
+          Each network entry contains key information:
+        </p>
+        <ul>
+          <li><strong>BSSID</strong> (MAC address of the access point)</li>
+          <li><strong>SSID</strong> (network name)</li>
+          <li><strong>Signal Strength</strong> (power)</li>
+          <li><strong>Channel</strong></li>
+          <li><strong>Encryption Type</strong> (e.g., WPA2, WPA3)</li>
+          <li><strong>Latitude</strong></li>
+          <li><strong>Longitude</strong></li>
+          <li><strong>Location Source</strong> (if obtained during handshake capture)</li>
+        </ul>
+      </section>
+      <section>
+        <h3>Tools Used</h3>
+        <ul>
+          <li><strong>Python (subprocess)</strong>: used to execute system-level scanning commands such as <code>airodump-ng</code> and
+            <code>aireplay-ng</code>.</li>
+          <li><strong>TKinter</strong>: used to realize the grapichal part of the application</li>
+          <li><strong>SQLite</strong>: used to store and retrieve the data about the scanned networks</li>
+          <li><strong>ADB</strong>: used to retrieve the GPS position from a connected Android device during handshake
+            capture, providing location data when available.</li>
+        </ul>
+      </section>
+      <section>
+        <h3>How It Works</h3>
+        <h4>1. Scanning</h4>
+        <p>
+          The tool begins by enabling monitor mode on the network interface. It scans for surrounding WiFi networks and
+          attempts to capture WPA handshakes. Once a handshake is captured, the relevant network information is saved
+          along with its GPS coordinates, if available via a connected Android phone and ADB.
+        </p>
+        <h4>2. Handshake Capture with GPS</h4>
+        <p>
+          If GPS coordinates are retrieved during handshake capture, an additional field named <code>LocationSource</code>
+          is added to that specific network’s data. The value of this field is set to <strong>"HandshakeCapture"</strong>
+          to indicate that the location was determined during the capture process.
+        </p>
+        <h4>3. Cracking</h4>
+        <p>
+          A dictionary-based attack is performed against the captured handshake files. The result is a list of cracked and
+          uncracked networks, which are then displayed on an interactive map.
+        </p>
+      </section>
+      <section>
+        <h3>Data Format</h3>
+        <p>
+          The scan results are stored in a CSV file called <code>wifi_data.csv</code>, which acts as the application's
+          database.
+        </p>
+        <p>The CSV includes the following base columns:</p>
+        <ul>
+          <li><code>bssid</code></li>
+          <li><code>ssid</code></li>
+          <li><code>power</code></li>
+          <li><code>channel</code></li>
+          <li><code>encryption</code></li>
+          <li><code>lat</code> (latitude)</li>
+          <li><code>lng</code> (longitude)</li>
+        </ul>
+        <p>
+          If GPS was obtained during handshake capture, a column named <code>LocationSource</code> is added with value
+          <code>"HandshakeCapture"</code> only for those networks. The CSV will contain this column only if at least one
+          network includes this field.
+        </p>
+      </section>
+      <section>
+        <h3>Authors</h3>
+        <p>Project developed by: <strong>Alessandro Boffolo Aldo</strong>, <strong>Narcis Paviliuc</strong>, <strong>Licia Congedo</strong>, <strong>Simone Papa</strong>, <strong>Cristiana Sorrenti</strong> and <strong>Gabriele Leone</strong></p>
+        <p>Course: Computer Science / Security Engineering / IoT Security</p>
+      </section>
+    </div> 
+  </main>
+</body>
+</html>

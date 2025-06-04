@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wi-Fi Statistics - CrackMate</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+   <header>
+     <div class="container">
+       <div class="logo-area">
+         <img src="logo/logo-transparent-png.png" alt="CrackMate Logo" class="logoimg">
+         <h1 class="logo">CrackMate</h1>
+       </div>
+       <nav>
+         <ul>
+           <li><a href="index.html">Home</a></li>
+           <li><a href="mappa.html">Map</a></li>
+           <li><a href="statistiche.html" class="active">Statistics</a></li>
+           <li><a href="info.html">Info</a></li>
+         </ul>
+       </nav>
+     </div>
+   </header>
+   <div class="main-content"> 
+        <h1 class="page-title">Wi-Fi Network Analysis Dashboard</h1> 
+        <div class="grid-container"> 
+            <div class="chart-container"> 
+                <h2>Encryption Types</h2>
+                <canvas id="encryptionChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2>Distribution by Band</h2>
+                <canvas id="bandChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2>Captured Handshakes</h2>
+                <canvas id="handshakeChart"></canvas>
+            </div>
+            <div class="chart-container" id="signalStrengthChartContainer">
+                <h2>Signal Strength (dBm)</h2>
+                <canvas id="powerChart"></canvas>
+            </div>
+        </div>
+        <div class="grid-container" style="grid-template-columns: 1fr;"> 
+            <div class="chart-container">
+                <h2>2.4 GHz Channel Usage</h2>
+                <canvas id="channel24GHzChart"></canvas>
+            </div>
+        </div>
+        <div class="grid-container" style="grid-template-columns: 1fr;"> 
+            <div class="chart-container">
+                <h2>5 GHz Channel Usage</h2>
+                <canvas id="channel5GHzChart"></canvas>
+            </div>
+        </div>
+        <div class="grid-container" style="grid-template-columns: 1fr;"> 
+            <div class="chart-container">
+                <h2>Networks with Known Passwords</h2>
+                <p id="passwordKnownCount">Loading data...</p>
+                <ul id="passwordKnownList"></ul> 
+            </div>
+        </div>
+    </div>
+    <script>
+        Chart.defaults.font.family = 'Roboto, Arial, sans-serif';
+        Chart.defaults.font.size = 14;
+        Chart.defaults.color = '#444';
+        
+        async function fetchDataAndRenderCharts() {
+            try {
+                const response = await fetch('networks.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
+                }
+                const networks = await response.json();
+
+                if (!networks || networks.length === 0) {
+                    console.warn("Network data is empty or not loaded.");
+                    const mainContent = document.querySelector('.main-content');
+                    if(mainContent) {
+                        mainContent.innerHTML = `<div class="error-message-container"><h1>No Data</h1><p>No network data was loaded or the data file is empty.</p></div>`;
+                    }
+                    return;
+                }
+
+                renderEncryptionChart(networks);
+                renderBandChart(networks);
+                renderHandshakeChart(networks);
+                renderPowerChart(networks);
+                renderChannelUsageCharts(networks);
+                displayPasswordInfo(networks);
+
+            } catch (error) {
+                console.error("Error loading or processing data:", error);
+                const mainContent = document.querySelector('.main-content');
+                if (mainContent) {
+                    mainContent.innerHTML = `<div class="error-message-container"><h1>Error Loading Data</h1><p>${error.message}.<br>Please ensure 'networks.json' is available in the correct location and is properly formatted.</p></div>`;
+                }
+            }
+        }
+
+        function getRandomColor(alpha = 0.7) {
+            const r = Math.floor(Math.random() * 220);
+            const g = Math.floor(Math.random() * 220);
+            const b = Math.floor(Math.random() * 220);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        function getStandardColors(count) {
+            const baseColors = [
+                'rgba(218, 55, 55, 0.8)',   
+                'rgba(54, 162, 235, 0.8)', 
+                'rgba(255, 206, 86, 0.8)',  
+                'rgba(75, 192, 192, 0.8)',  
+                'rgba(153, 102, 255, 0.8)', 
+                'rgba(255, 159, 64, 0.8)',  
+                'rgba(120, 180, 100, 0.8)', 
+                'rgba(199, 199, 199, 0.8)', 
+                'rgba(255, 99, 132, 0.8)',  
+                'rgba(60, 70, 200, 0.8)'   
+            ];
+            const colors = [];
+            for(let i = 0; i < count; i++){
+                colors.push(baseColors[i % baseColors.length]);
+            }
+            if (count > baseColors.length) {
+                 for(let i = baseColors.length; i < count; i++){
+                    colors.push(getRandomColor(0.8));
+                }
+            }
+            return colors;
+        }
+        
+        function renderEncryptionChart(networks) {
+            const encryptionCounts = {};
+            networks.forEach(net => {
+                const enc = net.encryption || "Unknown/Open";
+                encryptionCounts[enc] = (encryptionCounts[enc] || 0) + 1;
+            });
+            const ctx = document.getElementById('encryptionChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(encryptionCounts),
+                    datasets: [{
+                        data: Object.values(encryptionCounts),
+                        backgroundColor: getStandardColors(Object.keys(encryptionCounts).length),
+                        borderColor: 'var(--container-bg)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true, 
+                    plugins: {
+                        legend: { position: 'top', labels: { padding: 15, font: { size: 14 }}},
+                        tooltip: { backgroundColor: 'rgba(0,0,0,0.75)', titleFont: { size: 16 }, bodyFont: { size: 14 }, padding: 10}
+                    }
+                }
+            });
+        }
+
+        function renderBandChart(networks) {
+             const bandCounts = {};
+            networks.forEach(net => {
+                let band = net.band || "Unknown";
+                if (band.includes("2.4")) band = "2.4 GHz";
+                if (band.includes("5")) band = "5 GHz";
+                bandCounts[band] = (bandCounts[band] || 0) + 1;
+            });
+            const ctx = document.getElementById('bandChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(bandCounts),
+                    datasets: [{
+                        data: Object.values(bandCounts),
+                        backgroundColor: getStandardColors(Object.keys(bandCounts).length),
+                        borderColor: 'var(--container-bg)',
+                        borderWidth: 2,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                     plugins: {
+                        legend: { position: 'top', labels: { padding: 15, font: { size: 14 }}},
+                        tooltip: { backgroundColor: 'rgba(0,0,0,0.75)', titleFont: { size: 16 }, bodyFont: { size: 14 }, padding: 10}
+                    }
+                }
+            });
+        }
+
+        function renderHandshakeChart(networks) {
+            let captured = 0;
+            let notCaptured = 0;
+            networks.forEach(net => {
+                if (net.handshake_captured === 1) captured++; else notCaptured++;
+            });
+            const ctx = document.getElementById('handshakeChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Captured', 'Not Captured'],
+                    datasets: [{
+                        data: [captured, notCaptured],
+                        backgroundColor: [getStandardColors(10)[1], getStandardColors(10)[7]], 
+                        borderColor: 'var(--container-bg)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                     plugins: {
+                        legend: { position: 'top', labels: { padding: 15, font: { size: 14 }}},
+                        tooltip: { backgroundColor: 'rgba(0,0,0,0.75)', titleFont: { size: 16 }, bodyFont: { size: 14 }, padding: 10}
+                    }
+                }
+            });
+        }
+
+        function renderPowerChart(networks) {
+            const powerValues = networks.map(net => net.power).filter(p => p !== null && p !== undefined);
+            const bins = {};
+            const binSize = 5; let minPower = -100; let maxPower = -30;
+            for (let i = minPower; i <= maxPower; i += binSize) bins[`${i} to ${i + binSize -1} dBm`] = 0;
+            powerValues.forEach(p => {
+                let binned = false;
+                for (let i = minPower; i <= maxPower; i += binSize) {
+                    if (p >= i && p < i + binSize) { bins[`${i} to ${i + binSize -1} dBm`]++; binned = true; break; }
+                }
+                if (!binned) {
+                    if (p < minPower) bins[`< ${minPower} dBm`] = (bins[`< ${minPower} dBm`] || 0) + 1;
+                    else if (p >= maxPower + binSize) bins[`>= ${maxPower + binSize} dBm`] = (bins[`>= ${maxPower + binSize} dBm`] || 0) + 1;
+                    else { const cbs = Math.floor(p / binSize) * binSize; const bl = `${cbs} to ${cbs + binSize - 1} dBm`; if (!bins[bl]) bins[bl] = 0; bins[bl]++; }
+                }
+            });
+            const sortedBinLabels = Object.keys(bins).sort((a,b) => {
+                const vA = parseInt(a.match(/-?\d+/)?.[0]); const vB = parseInt(b.match(/-?\d+/)?.[0]);
+                if (a.startsWith("<")) return -1; if (b.startsWith("<")) return 1;
+                if (a.startsWith(">=")) return 1; if (b.startsWith(">=")) return -1;
+                return (vA || 0) - (vB || 0);
+            });
+            const sortedBinValues = sortedBinLabels.map(label => bins[label] || 0);
+            const ctx = document.getElementById('powerChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedBinLabels,
+                    datasets: [{
+                        label: 'Number of Networks', data: sortedBinValues,
+                        backgroundColor: getStandardColors(1)[0], borderColor: getStandardColors(1)[0].replace('0.8', '1'),
+                        borderWidth: 1, borderRadius: 4, barPercentage: 0.7, categoryPercentage: 0.8
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: true, 
+                    plugins: {
+                        legend: { display: true, position: 'top', align: 'center', labels: { boxWidth: 20, padding: 15, font: { size: 14 }}},
+                        tooltip: { backgroundColor: 'rgba(0,0,0,0.75)', titleFont: { size: 16 }, bodyFont: { size: 14 }, padding: 10}
+                    },
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Number of Networks', font: {size: 15, weight: '500'}}, grid: { color: '#e9e9e9' }, ticks: {padding:10}},
+                        x: { title: { display: true, text: 'Signal Strength', font: {size: 15, weight: '500'}}, grid: { display: false }, ticks: {padding:10, maxRotation: 45, minRotation: 30}}
+                    }
+                }
+            });
+        }
+
+        function renderChannelUsageCharts(networks) {
+            const channelCounts24 = {}; const channelCounts5 = {};
+            networks.forEach(net => {
+                if (net.channel === null || net.channel === undefined || net.channel === "") return;
+                let band = net.band || "Unknown";
+                if (band.includes("2.4")) band = "2.4 GHz"; else if (band.includes("5")) band = "5 GHz";
+                const channel = parseInt(net.channel, 10); if (isNaN(channel)) return;
+                if (band === "2.4 GHz") channelCounts24[channel] = (channelCounts24[channel] || 0) + 1;
+                else if (band === "5 GHz") channelCounts5[channel] = (channelCounts5[channel] || 0) + 1;
+            });
+            const createChannelChart = (elementId, datasetLabel, channelData, barColor) => {
+                const parentElement = document.getElementById(elementId).parentElement;
+                if (Object.keys(channelData).length === 0) {
+                    parentElement.innerHTML += `<p style="text-align:center; padding: 20px;">No data available for ${datasetLabel}.</p>`; return;
+                }
+                const sortedChannels = Object.entries(channelData).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+                const labels = sortedChannels.map(e => e[0]); const data = sortedChannels.map(e => e[1]);
+                const ctx = document.getElementById(elementId).getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar', data: { labels: labels, datasets: [{ label: datasetLabel, data: data, backgroundColor: barColor, borderColor: barColor.replace('0.8', '1'), borderWidth: 1, borderRadius: 4, barPercentage: 0.8, categoryPercentage: 0.9 }] },
+                    options: { 
+                        responsive: true, maintainAspectRatio: true, 
+                        plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(0,0,0,0.75)', titleFont: { size: 16 }, bodyFont: { size: 14 }, padding: 10}},
+                        scales: { 
+                            y: { beginAtZero: true, title: {display: true, text: 'Number of APs', font: {size: 15, weight: '500'}}, grid: { color: '#e9e9e9' } }, 
+                            x: { title: {display: true, text: 'Channel', font: {size: 15, weight: '500'}}, grid: { display: false } } 
+                        } 
+                    }
+                });
+            };
+            createChannelChart('channel24GHzChart', '2.4 GHz APs', channelCounts24, getStandardColors(10)[1]);
+            createChannelChart('channel5GHzChart', '5 GHz APs', channelCounts5, getStandardColors(10)[3]);
+        }
+        
+        function displayPasswordInfo(networks) {
+            const knownPasswords = networks.filter(net => net.password && net.password !== "");
+            const countElement = document.getElementById('passwordKnownCount');
+            const listElement = document.getElementById('passwordKnownList');
+            listElement.innerHTML = '';
+            countElement.textContent = `Found ${knownPasswords.length} networks with known passwords:`;
+            if (knownPasswords.length > 0) {
+                knownPasswords.forEach(net => {
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `<strong>SSID:</strong> ${net.ssid || '(No SSID)'} <br> <strong>BSSID:</strong> ${net.bssid} <br> <strong>Password:</strong> ${net.password}`;
+                    listElement.appendChild(listItem);
+                });
+            } else {
+                 const listItem = document.createElement('li');
+                 listItem.style.backgroundColor = 'transparent'; listItem.style.border = 'none';
+                 listItem.textContent = 'No networks with known passwords found.';
+                 listElement.appendChild(listItem);
+            }
+        }
+
+        fetchDataAndRenderCharts();
+    </script>
+</body>
+</html>

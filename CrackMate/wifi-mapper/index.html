@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CrackMate - Home</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="logo-area"> 
+        <img src="logo/logo-transparent-png.png" alt="CrackMate Logo" class="logoimg">
+        <h1 class="logo">CrackMate</h1>
+      </div>
+      <nav>
+        <ul>
+          <li><a href="index.html" class="active">Home</a></li>
+          <li><a href="mappa.html">Map</a></li>
+          <li><a href="statistiche.html">Statistics</a></li>
+          <li><a href="info.html">Info</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <section class="hero">
+      <h2>Welcome to CrackMate</h2>
+      <p>
+        <strong>CrackMate</strong> is a university project developed to analyze the security of WiFi networks within an
+        urban environment.
+        The system performs real-time scanning of wireless access points, captures handshake data where possible, and
+        uses cracking techniques
+        to determine the vulnerability level of each network.
+      </p>
+
+      <p>
+        Detected networks are displayed on an <strong>interactive map</strong> with color-coded markers:
+        <span class="color-green">Green</span> for networks that were scanned (secure networks);
+        <span class="color-orange">Orange</span> for networks where a handshake was captured but the password was not obtained;
+        <span class="color-red">Red</span> for networks were the handshake was captured and the password cracked.
+        Each marker includes detailed information such as BSSID, SSID, signal strength, channel, encryption type, and
+        GPS location.
+      </p>
+      <p>
+        The tool is powered by several technologies:
+      <ul>
+        <li><strong>Python (subprocess)</strong>: executes system-level commands (e.g., <code>airodump-ng</code>,
+          <code>aireplay-ng</code>)</li>
+        <li><strong>ADB</strong>: used to obtain GPS coordinates from a connected Android device during handshake
+          capture</li>
+        <li><strong>Tkinter</strong>: used to create the GUI of the application</li>
+        <li><strong>HTML/CSS/Javascript</strong>: used for the creation of this website, the map and the charts</li>
+        <li><strong>SQLite</strong>: used as database for storing and retriving data about the networks</li>
+        <li><strong>JSON</strong>: used to convert the database information for the website</li>
+      </ul>
+      </p>
+      <p>
+        Captured data is stored in a CSV file (<code>wifi_data.csv</code>) containing fields such as BSSID, SSID, signal
+        power, channel, encryption type,
+        latitude and longitude. If the GPS position was obtained during the handshake capture phase, a
+        <code>LocationSource</code> column is added
+        with the value <code>"HandshakeCapture"</code> for that network.
+      </p>
+      <p>
+        During the cracking phase, the tool attempts a dictionary-based attack on each captured handshake to determine
+        if the password can be retrieved.
+        Results are then aggregated in the statistics page, showing encryption trends, number of networks analyzed, and
+        crack success rate.
+      </p>
+      <p>
+        <strong>Disclaimer:</strong> This project does not promote illegal activity. All operations were conducted in
+        authorized or controlled environments,
+        and the data is used exclusively for educational and research purposes. Our goal is to raise awareness about
+        wireless security,
+        encourage the adoption of modern encryption standards like WPA3, and highlight the risks of using outdated
+        protection mechanisms.
+      </p>
+      <p>
+        Use the navigation menu to explore the interactive map, view detailed statistics, or read more about the
+        methodology behind CrackMate.
+      </p>
+    </section>
+  </main>
+</body>
+</html>

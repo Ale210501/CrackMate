@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mappa WiFi - CrackMate</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="logo-area"> 
+        <img src="logo/logo-transparent-png.png" alt="CrackMate Logo" class="logoimg">
+        <h1 class="logo">CrackMate</h1>
+      </div>
+      <nav>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="mappa.html" class="active">Map</a></li> 
+          <li><a href="statistiche.html">Statistics</a></li>
+          <li><a href="info.html">Info</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <main class="main-content mappa-page-container">
+    <h2 class="page-title-map">Scanned Wifi Networks Map</h2>
+    <div id="map"></div>
+  </main>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+    const map = L.map('map').setView([41.1171, 16.8719], 13); 
+
+	L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+	  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+	  subdomains: 'abcd',
+	  maxZoom: 19
+	}).addTo(map);
+
+
+    const legend = L.control({ position: 'bottomright' }); 
+    legend.onAdd = function (map) {
+      const div = L.DomUtil.create('div', 'legend'); 
+      div.innerHTML += "<strong>Legend</strong>"; 
+      div.innerHTML += '<div><i class="wifi-scanned-icon"></i> Network scanned</div>';
+      div.innerHTML += '<div><i class="wifi-handshake-icon"></i> Handshake Captured</div>';
+      div.innerHTML += '<div><i class="wifi-cracked-icon"></i> Password Obtained</div>';
+      return div;
+    };
+    legend.addTo(map);
+
+    fetch('networks.json') 
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (!data || data.length === 0) {
+          console.warn("Nessun dato WiFi da visualizzare sulla mappa.");
+          return;
+        }
+        data.forEach(wifi => {
+          if (typeof wifi.latitude !== 'number' || typeof wifi.longitude !== 'number') {
+            return;
+          }
+
+          let iconMapClass = 'map-icon-scanned'; 
+          if (wifi.password && wifi.password.trim() !== "") { 
+            iconMapClass = 'map-icon-cracked'; 
+          } else if (wifi.handshake_captured === 1) { 
+            iconMapClass = 'map-icon-handshake'; 
+          }
+
+          const marker = L.marker([wifi.latitude, wifi.longitude], {
+            icon: L.divIcon({
+              className: iconMapClass, 
+              iconSize: [16, 16], 
+              html: '' 
+            })
+          }).addTo(map);
+
+          const popupContent = `
+            <strong>SSID:</strong> ${wifi.ssid || '(Nessun SSID)'}<br>
+            <strong>BSSID:</strong> ${wifi.bssid}<br>
+            <strong>Power:</strong> ${wifi.power || 'N/D'} dBm<br>
+            <strong>Channel:</strong> ${wifi.channel || 'N/D'} (${wifi.band || 'N/D'})<br>
+            <strong>Encryption</strong> ${wifi.encryption || 'N/D'}
+            ${(wifi.password && wifi.password.trim() !== "") ? `<br><strong style="color: var(--primary-color);">Password:</strong> ${wifi.password}` : ''}
+          `;
+          marker.bindPopup(popupContent);
+        });
+      })
+      .catch(error => {
+        console.error('Errore nel caricamento dei dati WiFi:', error);
+        const mapDiv = document.getElementById('map');
+        if (mapDiv) {
+            mapDiv.innerHTML = `<div class="error-message-container" style="height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                                  <h1>Errore Dati Mappa</h1>
+                                  <p>Impossibile caricare i dati delle reti WiFi. (${error.message})</p>
+                                  <p>Controlla la console per maggiori dettagli.</p>
+                                </div>`;
+            mapDiv.style.background = 'var(--bg-color)'; 
+        }
+      });
+  </script>
+</body>
+</html>
