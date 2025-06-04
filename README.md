@@ -1,6 +1,6 @@
 # CrackMate
 <p align="center">
-  <img src="https://github.com/Ale210501/CrackMate/blob/main/logo-png.png" alt="CrackMate Logo" width="300"/>
+  <img src="CrackMate/logo/logo-transparent-png.png" alt="CrackMate Logo" width="300"/>
 </p>
 
 **CrackMate** is a Python desktop application designed for **Wi-Fi auditing**, particularly for detecting wireless networks and capturing/cracking WPA/WPA2 handshakes. The app follows a modular architecture, with a graphical user interface (GUI) built using `Tkinter` and background processes managed via `threading` to keep the interface responsive.
