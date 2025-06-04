@@ -1,0 +1,2 @@
+CrackMate/hc22000_files/rockyou.txt filter=lfs diff=lfs merge=lfs -text
+CrackMate/rockyou.txt filter=lfs diff=lfs merge=lfs -text
